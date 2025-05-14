@@ -2,11 +2,26 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, Button, StyleSheet, TextInput, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import colors from '../constants/colors';
+import { Picker } from '@react-native-picker/picker';
 
 export default function AdminScreen() {
   const [users, setUsers] = useState({});
-  const [editingCpf, setEditingCpf] = useState(null);  // Estado para controlar o CPF sendo editado
-  const [newCpf, setNewCpf] = useState("");  // Estado para o novo CPF
+  const [editingCpf, setEditingCpf] = useState(null);
+  const [newCpf, setNewCpf] = useState("");
+
+  const modelos = ['Mottu Sport', 'Mottu E', 'Mottu Pop'];
+  const patios = [
+    'Mottu Butantã',
+    'Mottu Limão',
+    'Mottu Lapa',
+    'Mottu Santo Amaro',
+    'Mottu Tatuapé',
+    'Mottu Santana',
+    'Mottu Penha',
+    'Mottu Mooca',
+    'Mottu São Mateus',
+    'Mottu Capão Redondo',
+  ];
 
   const loadUsers = async () => {
     const keys = await AsyncStorage.getAllKeys();
@@ -24,8 +39,18 @@ export default function AdminScreen() {
     }
   };
 
-  const handleDelete = (cpf) => {
-    deleteUser(cpf, setUsers);  // Chama a função de exclusão
+  const handleDelete = async (cpf) => {
+    try {
+      await AsyncStorage.removeItem(cpf);
+      setUsers((prev) => {
+        const updated = { ...prev };
+        delete updated[cpf];
+        return updated;
+      });
+      Alert.alert('Sucesso', 'Usuário excluído com sucesso!');
+    } catch (e) {
+      Alert.alert('Erro', 'Erro ao excluir usuário.');
+    }
   };
 
   const handleChange = (cpf, field, value) => {
@@ -43,22 +68,21 @@ export default function AdminScreen() {
       Alert.alert("Erro", "O CPF novo não pode ser igual ao CPF atual.");
       return;
     }
-    
+
     try {
-      const userData = { ...users[oldCpf], cpf: newCpf };  // Atualiza os dados com o novo CPF
-      await AsyncStorage.removeItem(oldCpf);  // Remove o CPF antigo
-      await AsyncStorage.setItem(newCpf, JSON.stringify(userData));  // Salva com o novo CPF
-      
+      const userData = { ...users[oldCpf], cpf: newCpf };
+      await AsyncStorage.removeItem(oldCpf);
+      await AsyncStorage.setItem(newCpf, JSON.stringify(userData));
+
       setUsers((prev) => {
         const updatedUsers = { ...prev };
-        delete updatedUsers[oldCpf];  // Remove o usuário antigo do estado
-        updatedUsers[newCpf] = userData;  // Adiciona o novo usuário no estado
+        delete updatedUsers[oldCpf];
+        updatedUsers[newCpf] = userData;
         return updatedUsers;
       });
 
-      setEditingCpf(null);  // Fecha a edição do CPF
-      setNewCpf("");  // Limpa o campo do CPF
-
+      setEditingCpf(null);
+      setNewCpf("");
       Alert.alert('Sucesso', 'CPF alterado com sucesso!');
     } catch (e) {
       Alert.alert('Erro', 'Erro ao alterar CPF.');
@@ -71,8 +95,7 @@ export default function AdminScreen() {
       {Object.entries(users).map(([cpf, info]) => (
         <View key={cpf} style={styles.userCard}>
           <Text style={styles.label}>📌 CPF: {cpf}</Text>
-          
-          {/* Adiciona a opção de alterar o CPF */}
+
           {editingCpf === cpf ? (
             <View>
               <TextInput
@@ -94,13 +117,44 @@ export default function AdminScreen() {
             value={info.nome}
             onChangeText={(text) => handleChange(cpf, 'nome', text)}
           />
+
           <Text style={styles.label}>🔑 Senha:</Text>
           <TextInput
             style={styles.input}
             value={info.senha}
             onChangeText={(text) => handleChange(cpf, 'senha', text)}
-            // REMOVE secureTextEntry para visualizar a senha
           />
+
+          <Text style={styles.label}>🏍️ Modelo da Moto:</Text>
+          <Picker
+            selectedValue={info.modelo || modelos[0]}
+            onValueChange={(value) => handleChange(cpf, 'modelo', value)}
+            style={styles.picker}
+          >
+            {modelos.map((modelo) => (
+              <Picker.Item key={modelo} label={modelo} value={modelo} />
+            ))}
+          </Picker>
+
+          <Text style={styles.label}>🆔 Placa da Moto:</Text>
+          <TextInput
+            style={styles.input}
+            value={info.placa || ''}
+            onChangeText={(text) => handleChange(cpf, 'placa', text)}
+            placeholder="Ex: ABC1D23"
+          />
+
+          <Text style={styles.label}>📍 Pátio:</Text>
+          <Picker
+            selectedValue={info.patio || patios[0]}
+            onValueChange={(value) => handleChange(cpf, 'patio', value)}
+            style={styles.picker}
+          >
+            {patios.map((patio) => (
+              <Picker.Item key={patio} label={patio} value={patio} />
+            ))}
+          </Picker>
+
           <View style={styles.buttonRow}>
             <View style={{ flex: 1, marginRight: 5 }}>
               <Button title="💾 Salvar" onPress={() => handleUpdate(cpf)} />
@@ -137,6 +191,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#aaa',
     padding: 8,
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+  picker: {
+    borderWidth: 1,
+    borderColor: '#aaa',
     borderRadius: 6,
     marginBottom: 10,
   },

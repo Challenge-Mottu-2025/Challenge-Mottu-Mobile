@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Picker } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Input from '../components/Input';
 import Button from '../components/Button';
@@ -9,10 +9,13 @@ export default function RegisterScreen({ navigation }) {
   const [nome, setNome] = useState('');
   const [cpf, setCpf] = useState('');
   const [senha, setSenha] = useState('');
+  const [modelo, setModelo] = useState('');
+  const [placa, setPlaca] = useState('');
+  const [patio, setPatio] = useState('');
   const [message, setMessage] = useState('');
 
   const handleRegister = async () => {
-    if (!nome || !cpf || !senha) {
+    if (!nome || !cpf || !senha || !modelo || !placa || !patio) {
       setMessage('Preencha todos os campos');
       return;
     }
@@ -21,7 +24,8 @@ export default function RegisterScreen({ navigation }) {
     if (existing) {
       setMessage('Usuário já registrado!');
     } else {
-      await AsyncStorage.setItem(cpf, JSON.stringify({ nome, senha }));
+      const userData = { nome, senha, modelo, placa, patio };
+      await AsyncStorage.setItem(cpf, JSON.stringify(userData));
       setMessage('Registrado com sucesso!');
       setTimeout(() => navigation.navigate('Login'), 1500);
     }
@@ -33,6 +37,31 @@ export default function RegisterScreen({ navigation }) {
       <Input value={nome} onChangeText={setNome} placeholder="Nome completo" />
       <Input value={cpf} onChangeText={setCpf} placeholder="CPF" keyboardType="numeric" />
       <Input value={senha} onChangeText={setSenha} placeholder="Senha" secureTextEntry />
+      <Input value={placa} onChangeText={setPlaca} placeholder="Placa da moto" autoCapitalize="characters" />
+
+      <Text style={styles.label}>Modelo da Moto</Text>
+      <Picker selectedValue={modelo} onValueChange={setModelo} style={styles.picker}>
+        <Picker.Item label="Selecione um modelo" value="" />
+        <Picker.Item label="Mottu Sport" value="Mottu Sport" />
+        <Picker.Item label="Mottu E" value="Mottu E" />
+        <Picker.Item label="Mottu Pop" value="Mottu Pop" />
+      </Picker>
+
+      <Text style={styles.label}>Pátio</Text>
+      <Picker selectedValue={patio} onValueChange={setPatio} style={styles.picker}>
+        <Picker.Item label="Selecione um pátio" value="" />
+        <Picker.Item label="Mottu Butantã" value="Mottu Butantã" />
+        <Picker.Item label="Mottu Limão" value="Mottu Limão" />
+        <Picker.Item label="Mottu Lapa" value="Mottu Lapa" />
+        <Picker.Item label="Mottu Santo Amaro" value="Mottu Santo Amaro" />
+        <Picker.Item label="Mottu Tatuapé" value="Mottu Tatuapé" />
+        <Picker.Item label="Mottu Santana" value="Mottu Santana" />
+        <Picker.Item label="Mottu Penha" value="Mottu Penha" />
+        <Picker.Item label="Mottu Mooca" value="Mottu Mooca" />
+        <Picker.Item label="Mottu São Mateus" value="Mottu São Mateus" />
+        <Picker.Item label="Mottu Capão Redondo" value="Mottu Capão Redondo" />
+      </Picker>
+
       {message ? <Text style={styles.message}>{message}</Text> : null}
       <Button title="Registrar" onPress={handleRegister} />
       <Button title="← Voltar" onPress={() => navigation.navigate('Home')} style={styles.backButton} />
@@ -53,6 +82,17 @@ const styles = StyleSheet.create({
     color: colors.primary,
     textAlign: 'center',
     marginBottom: 30,
+  },
+  label: {
+    marginTop: 15,
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  picker: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    marginTop: 5,
   },
   message: {
     color: colors.warning,
