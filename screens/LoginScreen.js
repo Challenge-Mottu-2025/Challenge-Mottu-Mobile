@@ -1,63 +1,138 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Input from '../components/Input';
-import Button from '../components/Button';
 import colors from '../constants/colors';
+import { LinearGradient } from 'expo-linear-gradient';
 
-export default function LoginScreen({ navigation }) {
-  const [cpf, setCpf] = useState('');
-  const [senha, setSenha] = useState('');
-  const [message, setMessage] = useState('');
+export default function DetailsScreen() {
+  const navigation = useNavigation();
+  const [users, setUsers] = useState({});
 
-  const handleLogin = async () => {
-    const data = await AsyncStorage.getItem(cpf);
-    if (!data) {
-      setMessage('Usuário não encontrado');
-      return;
-    }
+  useEffect(() => {
+    const loadUsers = async () => {
+      const keys = await AsyncStorage.getAllKeys();
+      const stores = await AsyncStorage.multiGet(keys);
+      const data = Object.fromEntries(stores.map(([k, v]) => [k, JSON.parse(v)]));
+      setUsers(data);
+    };
 
-    const user = JSON.parse(data);
-    if (user.senha === senha) {
-      setMessage('Login bem-sucedido!');
-      setTimeout(() => navigation.navigate('Dashboard', { nome: user.nome }), 1500);
-    } else {
-      setMessage('Senha incorreta');
-    }
-  };
+    loadUsers();
+  }, []);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Entrar</Text>
-      <Input value={cpf} onChangeText={setCpf} placeholder="CPF" keyboardType="numeric" />
-      <Input value={senha} onChangeText={setSenha} placeholder="Senha" secureTextEntry />
-      {message ? <Text style={styles.message}>{message}</Text> : null}
-      <Button title="Entrar" onPress={handleLogin} />
-      <Button title="← Voltar" onPress={() => navigation.navigate('Home')} style={styles.backButton} />
-    </View>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      {/* Botão Voltar */}
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backWrapper}>
+        <LinearGradient
+          colors={['#25E348FF', '#07C744DA']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.backButton}
+        >
+          <Text style={styles.backText}>← Voltar</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+
+      <Text style={styles.title}>🏍️ Motos Cadastradas</Text>
+
+      {Object.entries(users).map(([cpf, user]) => (
+        <View key={cpf} style={styles.card}>
+
+
+          <View style={styles.infoRow}>
+            <Text style={styles.emoji}>🛵</Text>
+            <Text style={styles.label}>Modelo:</Text>
+            <Text style={styles.value}>{user.modelo || 'N/A'}</Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Text style={styles.emoji}>🔢</Text>
+            <Text style={styles.label}>Placa:</Text>
+            <Text style={styles.value}>{user.placa || 'N/A'}</Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Text style={styles.emoji}>📍</Text>
+            <Text style={styles.label}>Pátio:</Text>
+            <Text style={styles.value}>{user.patio || 'N/A'}</Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Text style={styles.emoji}>✅</Text>
+            <Text style={[styles.value, styles.status]}>Pronta para uso</Text>
+          </View>
+        </View>
+      ))}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 30,
     backgroundColor: colors.background,
-    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 60,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: colors.primary,
-    textAlign: 'center',
-    marginBottom: 30,
-  },
-  message: {
-    color: colors.warning,
-    textAlign: 'center',
-    marginVertical: 10,
+  backWrapper: {
+    alignSelf: 'flex-start',
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 25,
+    elevation: 5,
   },
   backButton: {
-    marginTop: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 16,
+  },
+  backText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: colors.primary,
+    textAlign: 'center',
+    marginBottom: 28,
+    letterSpacing: 1,
+  },
+  card: {
+    backgroundColor: '#fff',
+    paddingVertical: 26,
+    paddingHorizontal: 24,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 10,
+    marginBottom: 24,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  emoji: {
+    fontSize: 22,
+    marginRight: 12,
+  },
+  label: {
+    fontSize: 18,
+    color: '#555',
+    width: 80,
+  },
+  value: {
+    fontWeight: '700',
+    fontSize: 18,
+    color: colors.primary,
+    flexShrink: 1,
+  },
+  status: {
+    color: '#27ae60',
   },
 });

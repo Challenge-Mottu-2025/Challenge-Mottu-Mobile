@@ -5,9 +5,7 @@ import colors from '../constants/colors';
 import { Picker } from '@react-native-picker/picker';
 
 export default function AdminScreen() {
-  const [users, setUsers] = useState({});
-  const [editingCpf, setEditingCpf] = useState(null);
-  const [newCpf, setNewCpf] = useState("");
+  const [motos, setMotos] = useState({});
 
   const modelos = ['Mottu Sport', 'Mottu E', 'Mottu Pop'];
   const patios = [
@@ -23,112 +21,57 @@ export default function AdminScreen() {
     'Mottu Capão Redondo',
   ];
 
-  const loadUsers = async () => {
+  const loadMotos = async () => {
     const keys = await AsyncStorage.getAllKeys();
     const stores = await AsyncStorage.multiGet(keys);
     const data = Object.fromEntries(stores.map(([k, v]) => [k, JSON.parse(v)]));
-    setUsers(data);
+    setMotos(data);
   };
 
-  const handleUpdate = async (cpf) => {
+  const handleUpdate = async (key) => {
     try {
-      await AsyncStorage.setItem(cpf, JSON.stringify(users[cpf]));
-      Alert.alert('Sucesso', 'Usuário atualizado com sucesso!');
+      await AsyncStorage.setItem(key, JSON.stringify(motos[key]));
+      Alert.alert('Sucesso', 'Moto atualizada com sucesso!');
     } catch (e) {
-      Alert.alert('Erro', 'Erro ao atualizar usuário.');
+      Alert.alert('Erro', 'Erro ao atualizar moto.');
     }
   };
 
-  const handleDelete = async (cpf) => {
+  const handleDelete = async (key) => {
     try {
-      await AsyncStorage.removeItem(cpf);
-      setUsers((prev) => {
+      await AsyncStorage.removeItem(key);
+      setMotos((prev) => {
         const updated = { ...prev };
-        delete updated[cpf];
+        delete updated[key];
         return updated;
       });
-      Alert.alert('Sucesso', 'Usuário excluído com sucesso!');
+      Alert.alert('Sucesso', 'Moto excluída com sucesso!');
     } catch (e) {
-      Alert.alert('Erro', 'Erro ao excluir usuário.');
+      Alert.alert('Erro', 'Erro ao excluir moto.');
     }
   };
 
-  const handleChange = (cpf, field, value) => {
-    setUsers((prev) => ({
+  const handleChange = (key, field, value) => {
+    setMotos((prev) => ({
       ...prev,
-      [cpf]: {
-        ...prev[cpf],
+      [key]: {
+        ...prev[key],
         [field]: value,
       },
     }));
   };
 
-  const handleCpfChange = async (oldCpf, newCpf) => {
-    if (oldCpf === newCpf) {
-      Alert.alert("Erro", "O CPF novo não pode ser igual ao CPF atual.");
-      return;
-    }
-
-    try {
-      const userData = { ...users[oldCpf], cpf: newCpf };
-      await AsyncStorage.removeItem(oldCpf);
-      await AsyncStorage.setItem(newCpf, JSON.stringify(userData));
-
-      setUsers((prev) => {
-        const updatedUsers = { ...prev };
-        delete updatedUsers[oldCpf];
-        updatedUsers[newCpf] = userData;
-        return updatedUsers;
-      });
-
-      setEditingCpf(null);
-      setNewCpf("");
-      Alert.alert('Sucesso', 'CPF alterado com sucesso!');
-    } catch (e) {
-      Alert.alert('Erro', 'Erro ao alterar CPF.');
-    }
-  };
-
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Button title="🔄 Carregar usuários salvos" onPress={loadUsers} />
-      {Object.entries(users).map(([cpf, info]) => (
-        <View key={cpf} style={styles.userCard}>
-          <Text style={styles.label}>📌 CPF: {cpf}</Text>
-
-          {editingCpf === cpf ? (
-            <View>
-              <TextInput
-                style={styles.input}
-                value={newCpf}
-                onChangeText={setNewCpf}
-                placeholder="Novo CPF"
-              />
-              <Button title="Alterar CPF" onPress={() => handleCpfChange(cpf, newCpf)} />
-              <Button title="Cancelar" onPress={() => setEditingCpf(null)} color="gray" />
-            </View>
-          ) : (
-            <Button title="Alterar CPF" onPress={() => { setEditingCpf(cpf); setNewCpf(""); }} />
-          )}
-
-          <Text style={styles.label}>👤 Nome:</Text>
-          <TextInput
-            style={styles.input}
-            value={info.nome}
-            onChangeText={(text) => handleChange(cpf, 'nome', text)}
-          />
-
-          <Text style={styles.label}>🔑 Senha:</Text>
-          <TextInput
-            style={styles.input}
-            value={info.senha}
-            onChangeText={(text) => handleChange(cpf, 'senha', text)}
-          />
+      <Button title="🔄 Carregar Motos Registradas" onPress={loadMotos} />
+      {Object.entries(motos).map(([key, info]) => (
+        <View key={key} style={styles.card}>
+          <Text style={styles.label}>🆔 ID: {key}</Text>
 
           <Text style={styles.label}>🏍️ Modelo da Moto:</Text>
           <Picker
             selectedValue={info.modelo || modelos[0]}
-            onValueChange={(value) => handleChange(cpf, 'modelo', value)}
+            onValueChange={(value) => handleChange(key, 'modelo', value)}
             style={styles.picker}
           >
             {modelos.map((modelo) => (
@@ -136,18 +79,18 @@ export default function AdminScreen() {
             ))}
           </Picker>
 
-          <Text style={styles.label}>🆔 Placa da Moto:</Text>
+          <Text style={styles.label}>📋 Placa da Moto:</Text>
           <TextInput
             style={styles.input}
             value={info.placa || ''}
-            onChangeText={(text) => handleChange(cpf, 'placa', text)}
+            onChangeText={(text) => handleChange(key, 'placa', text)}
             placeholder="Ex: ABC1D23"
           />
 
           <Text style={styles.label}>📍 Pátio:</Text>
           <Picker
             selectedValue={info.patio || patios[0]}
-            onValueChange={(value) => handleChange(cpf, 'patio', value)}
+            onValueChange={(value) => handleChange(key, 'patio', value)}
             style={styles.picker}
           >
             {patios.map((patio) => (
@@ -157,10 +100,10 @@ export default function AdminScreen() {
 
           <View style={styles.buttonRow}>
             <View style={{ flex: 1, marginRight: 5 }}>
-              <Button title="💾 Salvar" onPress={() => handleUpdate(cpf)} />
+              <Button title="💾 Salvar" onPress={() => handleUpdate(key)} />
             </View>
             <View style={{ flex: 1, marginLeft: 5 }}>
-              <Button title="🗑️ Excluir" color="#ff3b30" onPress={() => handleDelete(cpf)} />
+              <Button title="🗑️ Excluir" color="#ff3b30" onPress={() => handleDelete(key)} />
             </View>
           </View>
         </View>
@@ -174,7 +117,7 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: colors.background,
   },
-  userCard: {
+  card: {
     padding: 15,
     borderWidth: 1,
     borderColor: '#ccc',

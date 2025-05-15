@@ -6,38 +6,40 @@ import Button from '../components/Button';
 import colors from '../constants/colors';
 
 export default function RegisterScreen({ navigation }) {
-  const [nome, setNome] = useState('');
-  const [cpf, setCpf] = useState('');
-  const [senha, setSenha] = useState('');
   const [modelo, setModelo] = useState('');
   const [placa, setPlaca] = useState('');
   const [patio, setPatio] = useState('');
   const [message, setMessage] = useState('');
 
   const handleRegister = async () => {
-    if (!nome || !cpf || !senha || !modelo || !placa || !patio) {
+    if (!modelo || !placa || !patio) {
       setMessage('Preencha todos os campos');
       return;
     }
 
-    const existing = await AsyncStorage.getItem(cpf);
+    const placaKey = placa.toUpperCase().replace(/\s/g, '');
+    const existing = await AsyncStorage.getItem(placaKey);
+
     if (existing) {
-      setMessage('Usuário já registrado!');
+      setMessage('Moto já cadastrada!');
     } else {
-      const userData = { nome, senha, modelo, placa, patio };
-      await AsyncStorage.setItem(cpf, JSON.stringify(userData));
-      setMessage('Registrado com sucesso!');
-      setTimeout(() => navigation.navigate('Login'), 1500);
+      const motoData = { modelo, placa: placaKey, patio };
+      await AsyncStorage.setItem(placaKey, JSON.stringify(motoData));
+      setMessage('Moto cadastrada com sucesso!');
+      setTimeout(() => navigation.navigate('Home'), 1500);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Registro</Text>
-      <Input value={nome} onChangeText={setNome} placeholder="Nome completo" />
-      <Input value={cpf} onChangeText={setCpf} placeholder="CPF" keyboardType="numeric" />
-      <Input value={senha} onChangeText={setSenha} placeholder="Senha" secureTextEntry />
-      <Input value={placa} onChangeText={setPlaca} placeholder="Placa da moto" autoCapitalize="characters" />
+      <Text style={styles.title}>Cadastro de Moto</Text>
+
+      <Input
+        value={placa}
+        onChangeText={setPlaca}
+        placeholder="Placa da moto"
+        autoCapitalize="characters"
+      />
 
       <Text style={styles.label}>Modelo da Moto</Text>
       <Picker selectedValue={modelo} onValueChange={setModelo} style={styles.picker}>
@@ -63,7 +65,8 @@ export default function RegisterScreen({ navigation }) {
       </Picker>
 
       {message ? <Text style={styles.message}>{message}</Text> : null}
-      <Button title="Registrar" onPress={handleRegister} />
+
+      <Button title="Cadastrar Moto" onPress={handleRegister} />
       <Button title="← Voltar" onPress={() => navigation.navigate('Home')} style={styles.backButton} />
     </View>
   );
