@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import DropDownPicker from 'react-native-dropdown-picker';
 import colors from '../constants/colors';
+import AntDesign from 'react-native-vector-icons/AntDesign';
+
 
 export default function RegisterScreen({ navigation }) {
   const [modelo, setModelo] = useState(null);
   const [patio, setPatio] = useState(null);
   const [placa, setPlaca] = useState('');
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState(''); // 'error' | 'success'
 
   const [modeloOpen, setModeloOpen] = useState(false);
   const [patioOpen, setPatioOpen] = useState(false);
@@ -34,118 +37,198 @@ export default function RegisterScreen({ navigation }) {
     { label: 'Mottu Capão Redondo', value: 'Mottu Capão Redondo' },
   ]);
 
-  const handleRegister = async () => {
-    if (!modelo || !placa || !patio) {
-      setMessage('Preencha todos os campos');
-      return;
-    }
+  const placaRegex = /^[A-Z]{3}-?[0-9][A-Z0-9][0-9]{2}$/;
 
-    const placaKey = placa.toUpperCase().replace(/\s/g, '');
-    const existing = await AsyncStorage.getItem(placaKey);
+const handleRegister = async () => {
+  const placaKey = placa.toUpperCase().replace(/\s/g, '');
 
-    if (existing) {
-      setMessage('Moto já cadastrada!');
-    } else {
-      const motoData = { modelo, placa: placaKey, patio };
-      await AsyncStorage.setItem(placaKey, JSON.stringify(motoData));
-      setMessage('Moto cadastrada com sucesso!');
-      setTimeout(() => navigation.navigate('Home'), 1500);
-    }
-  };
+  if (!modelo || !placaKey || !patio) {
+    setMessageType('error');
+    setMessage('Por favor, preencha todos os campos.');
+    return;
+  }
 
-  // Para evitar que dois dropdowns fiquem abertos simultaneamente
+  if (!placaRegex.test(placaKey)) {
+    setMessageType('error');
+    setMessage('Placa inválida. Use o formato antigo (ABC-1234) ou Mercosul (ABC1D23).');
+    return;
+  }
+
+  const existing = await AsyncStorage.getItem(placaKey);
+
+  if (existing) {
+    setMessageType('error');
+    setMessage('Esta moto já está cadastrada!');
+  } else {
+    const motoData = { modelo, placa: placaKey, patio };
+    await AsyncStorage.setItem(placaKey, JSON.stringify(motoData));
+    setMessageType('success');
+    setMessage('Moto cadastrada com sucesso!');
+    setTimeout(() => navigation.navigate('Home'), 1500);
+  }
+};
+
   useEffect(() => {
-    if (modeloOpen) {
-      setPatioOpen(false);
-    }
+    if (modeloOpen) setPatioOpen(false);
   }, [modeloOpen]);
 
   useEffect(() => {
-    if (patioOpen) {
-      setModeloOpen(false);
-    }
+    if (patioOpen) setModeloOpen(false);
   }, [patioOpen]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Cadastro de Moto</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        <TouchableOpacity style={styles.backArrow} onPress={() => navigation.goBack()}>
+          <AntDesign name="caretleft" size={28} color={colors.primary} />
+        </TouchableOpacity>
 
-      <Input
-        value={placa}
-        onChangeText={setPlaca}
-        placeholder="Placa da moto"
-        autoCapitalize="characters"
-      />
+        <View style={styles.container}>
 
-      <Text style={styles.label}>Modelo da Moto</Text>
-      <DropDownPicker
-        open={modeloOpen}
-        value={modelo}
-        items={modeloItems}
-        setOpen={setModeloOpen}
-        setValue={setModelo}
-        setItems={setModeloItems}
-        placeholder="Selecione um modelo"
-        style={styles.dropdown}
-        dropDownContainerStyle={styles.dropDownContainer}
-      />
+          <Text style={styles.title}>Cadastro de Moto</Text>
 
-      <Text style={styles.label}>Pátio</Text>
-      <DropDownPicker
-        open={patioOpen}
-        value={patio}
-        items={patioItems}
-        setOpen={setPatioOpen}
-        setValue={setPatio}
-        setItems={setPatioItems}
-        placeholder="Selecione um pátio"
-        style={styles.dropdown}
-        dropDownContainerStyle={styles.dropDownContainer}
-      />
+          <Input
+            value={placa}
+            onChangeText={setPlaca}
+            placeholder="Placa da moto (ex: ABC-1234)"
+            autoCapitalize="characters"
+            maxLength={8}
+            style={styles.input}
+            keyboardType="default"
+          />
 
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+          <Text style={styles.label}>Modelo da Moto</Text>
+          <DropDownPicker
+            open={modeloOpen}
+            value={modelo}
+            items={modeloItems}
+            setOpen={setModeloOpen}
+            setValue={setModelo}
+            setItems={setModeloItems}
+            placeholder="Selecione um modelo"
+            style={styles.dropdown}
+            dropDownContainerStyle={styles.dropDownContainer}
+            listMode="MODAL"
+            modalProps={{
+              animationType: 'slide',
+            }}
+            modalTitle="Selecione o modelo da moto"
+          />
 
-      <Button title="Cadastrar Moto" onPress={handleRegister} />
-      <Button title="← Voltar" onPress={() => navigation.navigate('Home')} style={styles.backButton} />
-    </View>
+          <Text style={styles.label}>Pátio</Text>
+          <DropDownPicker
+            open={patioOpen}
+            value={patio}
+            items={patioItems}
+            setOpen={setPatioOpen}
+            setValue={setPatio}
+            setItems={setPatioItems}
+            placeholder="Selecione um pátio"
+            style={styles.dropdown}
+            dropDownContainerStyle={styles.dropDownContainer}
+            listMode="MODAL"
+            modalProps={{
+              animationType: 'slide',
+            }}
+            modalTitle="Selecione o pátio"
+          />
+
+          {message ? (
+            <Text style={[styles.message, messageType === 'error' ? styles.error : styles.success]}>
+              {message}
+            </Text>
+          ) : null}
+
+          <Button title="Cadastrar Moto" onPress={handleRegister} style={styles.registerButton} />
+          
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 30,
-    backgroundColor: colors.background,
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: 'center',
   },
-  title: {
+  container: {
+    padding: 30,
+  },
+  backArrow: {
+    paddingTop: 50,
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    padding: 10,
+  },
+  backArrowText: {
     fontSize: 28,
+    color: colors.primary,
+  },
+  title: {
+    fontSize: 30,
     fontWeight: 'bold',
     color: colors.primary,
     textAlign: 'center',
     marginBottom: 30,
   },
   label: {
-    marginTop: 15,
+    marginTop: 20,
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
   },
-  dropdown: {
+  input: {
+    fontSize: 16,
+    color: 'white',
+    borderWidth: 1,
+    borderRadius: 8,
+    borderColor: colors.primary,
+    padding: 15,
     marginTop: 5,
+  },
+  dropdown: {
+    marginTop: 10,
     backgroundColor: '#fff',
     borderRadius: 8,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   dropDownContainer: {
     backgroundColor: '#fff',
     borderRadius: 8,
+    borderColor: '#ccc',
+    borderWidth: 1,
   },
   message: {
-    color: colors.warning,
+    marginTop: 27,
+    fontSize: 15,
     textAlign: 'center',
-    marginVertical: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
   },
-  backButton: {
-    marginTop: 20,
+  error: {
+    color: '#D32F2F',
+    backgroundColor: '#FFCDD2',
+    borderColor: '#D32F2F',
+    borderWidth: 1,
+  },
+  success: {
+    color: '#388E3C',
+    backgroundColor: '#C8E6C9',
+    borderColor: '#388E3C',
+    borderWidth: 1,
+  },
+  registerButton: {
+    marginTop: 30,
   },
 });
