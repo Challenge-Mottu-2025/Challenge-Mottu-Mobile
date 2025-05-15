@@ -70,7 +70,7 @@ export default function HomeScreen({ navigation }) {
           </Text>
 
           <View style={styles.buttonsContainer}>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.button}>
+            <TouchableOpacity onPress={() => navigation.navigate('Opcoes')} style={styles.button}>
               <Text style={styles.buttonText}>Checar Motos</Text>
             </TouchableOpacity>
 
@@ -92,7 +92,7 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  
+
   container: {
     flexGrow: 1,
     backgroundColor: '#0f0f0f',

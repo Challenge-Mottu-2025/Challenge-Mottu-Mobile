@@ -8,6 +8,7 @@ import LoginScreen from './screens/LoginScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import DetailsScreen from './screens/DetailsScreen';
 import AdminScreen from './screens/AdminScreen';
+import OpcoesScreen from './screens/OpcoesScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -30,6 +31,11 @@ export default function App() {
         <Stack.Screen
           name="Login"
           component={LoginScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name='Opcoes'
+          component={OpcoesScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen
