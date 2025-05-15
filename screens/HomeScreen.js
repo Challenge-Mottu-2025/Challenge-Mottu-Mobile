@@ -72,16 +72,20 @@ export default function HomeScreen({ navigation }) {
 
           <View style={styles.buttonsContainer}>
             <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.button}>
-              <Text style={styles.buttonText}>Entrar</Text>
+              <Text style={styles.buttonText}>Checar Motos</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => navigation.navigate('Register')} style={styles.button}>
-              <Text style={styles.buttonText}>Criar conta</Text>
+              <Text style={styles.buttonText}>Adicionar Moto</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => navigation.navigate('Admin')} style={styles.button}>
-              <Text style={styles.buttonText}>Área Admin</Text>
+              <Text style={styles.buttonText}>Administrar Motos</Text>
             </TouchableOpacity>
+          </View>
+          <View style={styles.copyright}>
+            <Text style={styles.textCopy}>Esta startup conta com o apoio institucional da Mottu.</Text>
+            <Text style={styles.textCopy}>© 2025 Todos os direitos reservados.</Text>
           </View>
         </Animated.View>
       </View>
@@ -141,4 +145,14 @@ const styles = StyleSheet.create({
     fontSize: 19,
     fontWeight: '600',
   },
+  copyright: {
+    marginTop: 30,
+    alignItems: 'center',
+  },
+  textCopy: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginVertical: 5,
+    color: '#CCCCCC'
+  }
 });
