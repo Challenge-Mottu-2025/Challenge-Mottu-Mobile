@@ -8,7 +8,7 @@ import RegisterScreen from './screens/RegisterScreen';
 import LoginScreen from './screens/LoginScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import DetailsScreen from './screens/DetailsScreen';
-import AdminScreen from './screens/AdminScreen'; // ✅ Nova tela adicionada
+import AdminScreen from './screens/AdminScreen';
 
 const Stack = createNativeStackNavigator();
 

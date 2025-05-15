@@ -1,15 +1,38 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Picker } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Input from '../components/Input';
 import Button from '../components/Button';
+import DropDownPicker from 'react-native-dropdown-picker';
 import colors from '../constants/colors';
 
 export default function RegisterScreen({ navigation }) {
-  const [modelo, setModelo] = useState('');
+  const [modelo, setModelo] = useState(null);
+  const [patio, setPatio] = useState(null);
   const [placa, setPlaca] = useState('');
-  const [patio, setPatio] = useState('');
   const [message, setMessage] = useState('');
+
+  const [modeloOpen, setModeloOpen] = useState(false);
+  const [patioOpen, setPatioOpen] = useState(false);
+
+  const [modeloItems, setModeloItems] = useState([
+    { label: 'Mottu Sport', value: 'Mottu Sport' },
+    { label: 'Mottu E', value: 'Mottu E' },
+    { label: 'Mottu Pop', value: 'Mottu Pop' },
+  ]);
+
+  const [patioItems, setPatioItems] = useState([
+    { label: 'Mottu Butantã', value: 'Mottu Butantã' },
+    { label: 'Mottu Limão', value: 'Mottu Limão' },
+    { label: 'Mottu Lapa', value: 'Mottu Lapa' },
+    { label: 'Mottu Santo Amaro', value: 'Mottu Santo Amaro' },
+    { label: 'Mottu Tatuapé', value: 'Mottu Tatuapé' },
+    { label: 'Mottu Santana', value: 'Mottu Santana' },
+    { label: 'Mottu Penha', value: 'Mottu Penha' },
+    { label: 'Mottu Mooca', value: 'Mottu Mooca' },
+    { label: 'Mottu São Mateus', value: 'Mottu São Mateus' },
+    { label: 'Mottu Capão Redondo', value: 'Mottu Capão Redondo' },
+  ]);
 
   const handleRegister = async () => {
     if (!modelo || !placa || !patio) {
@@ -30,6 +53,19 @@ export default function RegisterScreen({ navigation }) {
     }
   };
 
+  // Para evitar que dois dropdowns fiquem abertos simultaneamente
+  useEffect(() => {
+    if (modeloOpen) {
+      setPatioOpen(false);
+    }
+  }, [modeloOpen]);
+
+  useEffect(() => {
+    if (patioOpen) {
+      setModeloOpen(false);
+    }
+  }, [patioOpen]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Cadastro de Moto</Text>
@@ -42,27 +78,30 @@ export default function RegisterScreen({ navigation }) {
       />
 
       <Text style={styles.label}>Modelo da Moto</Text>
-      <Picker selectedValue={modelo} onValueChange={setModelo} style={styles.picker}>
-        <Picker.Item label="Selecione um modelo" value="" />
-        <Picker.Item label="Mottu Sport" value="Mottu Sport" />
-        <Picker.Item label="Mottu E" value="Mottu E" />
-        <Picker.Item label="Mottu Pop" value="Mottu Pop" />
-      </Picker>
+      <DropDownPicker
+        open={modeloOpen}
+        value={modelo}
+        items={modeloItems}
+        setOpen={setModeloOpen}
+        setValue={setModelo}
+        setItems={setModeloItems}
+        placeholder="Selecione um modelo"
+        style={styles.dropdown}
+        dropDownContainerStyle={styles.dropDownContainer}
+      />
 
       <Text style={styles.label}>Pátio</Text>
-      <Picker selectedValue={patio} onValueChange={setPatio} style={styles.picker}>
-        <Picker.Item label="Selecione um pátio" value="" />
-        <Picker.Item label="Mottu Butantã" value="Mottu Butantã" />
-        <Picker.Item label="Mottu Limão" value="Mottu Limão" />
-        <Picker.Item label="Mottu Lapa" value="Mottu Lapa" />
-        <Picker.Item label="Mottu Santo Amaro" value="Mottu Santo Amaro" />
-        <Picker.Item label="Mottu Tatuapé" value="Mottu Tatuapé" />
-        <Picker.Item label="Mottu Santana" value="Mottu Santana" />
-        <Picker.Item label="Mottu Penha" value="Mottu Penha" />
-        <Picker.Item label="Mottu Mooca" value="Mottu Mooca" />
-        <Picker.Item label="Mottu São Mateus" value="Mottu São Mateus" />
-        <Picker.Item label="Mottu Capão Redondo" value="Mottu Capão Redondo" />
-      </Picker>
+      <DropDownPicker
+        open={patioOpen}
+        value={patio}
+        items={patioItems}
+        setOpen={setPatioOpen}
+        setValue={setPatio}
+        setItems={setPatioItems}
+        placeholder="Selecione um pátio"
+        style={styles.dropdown}
+        dropDownContainerStyle={styles.dropDownContainer}
+      />
 
       {message ? <Text style={styles.message}>{message}</Text> : null}
 
@@ -92,10 +131,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
-  picker: {
+  dropdown: {
+    marginTop: 5,
     backgroundColor: '#fff',
     borderRadius: 8,
-    marginTop: 5,
+  },
+  dropDownContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
   },
   message: {
     color: colors.warning,
