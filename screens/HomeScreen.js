@@ -55,7 +55,6 @@ export default function HomeScreen({ navigation }) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
         <Animated.Image
           source={require('../assets/logo-mottu.png')}
@@ -89,17 +88,14 @@ export default function HomeScreen({ navigation }) {
           </View>
         </Animated.View>
       </View>
-    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContainer: {
+  
+  container: {
     flexGrow: 1,
     backgroundColor: '#0f0f0f',
-  },
-  container: {
-    flex: 1,
     alignItems: 'center',
     paddingVertical: 60,
     paddingHorizontal: 20,
