@@ -9,6 +9,7 @@ import DashboardScreen from './screens/DashboardScreen';
 import DetailsScreen from './screens/DetailsScreen';
 import AdminScreen from './screens/AdminScreen';
 import OpcoesScreen from './screens/OpcoesScreen';
+import MotoScreen from './screens/MotoScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -36,6 +37,11 @@ export default function App() {
         <Stack.Screen
           name='Opcoes'
           component={OpcoesScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name='Motos'
+          component={MotoScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen

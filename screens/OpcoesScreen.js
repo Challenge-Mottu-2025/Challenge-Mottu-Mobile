@@ -1,19 +1,15 @@
-import React, { useRef, useEffect } from "react";
-import {
-  StyleSheet,
-  View,
-  Text,
-  Pressable,
-  Animated,
-  Image,
-  TouchableOpacity,
-} from "react-native";
+import React, { useRef, useEffect, useState } from "react";
+import { StyleSheet, Text, Pressable, Animated, Image, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import colors from '../constants/colors';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function OpcoesScreen() {
+
   const navigation = useNavigation();
+
+  const [moto, setMotos] = useState([])
 
   const containerAnim = useRef(new Animated.Value(0)).current;
 
@@ -21,17 +17,17 @@ export default function OpcoesScreen() {
     {
       label: "Mottu Sport",
       image: require("../assets/mottu-sport.webp"),
-      route: "SportScreen",
+      id: 1
     },
     {
       label: "Mottu E",
       image: require("../assets/mottu-e.webp"),
-      route: "EScreen",
+      id: 2
     },
     {
       label: "Mottu Pop",
       image: require("../assets/mottu-pop.webp"),
-      route: "PopScreen",
+      id: 3
     },
   ];
 
@@ -40,6 +36,23 @@ export default function OpcoesScreen() {
     translateY: useRef(new Animated.Value(20)).current,
     scale: useRef(new Animated.Value(1)).current,
   }));
+
+  useEffect(() => {
+    const loadMotos = async () => {
+      try {
+        const keys = await AsyncStorage.getAllKeys();
+        const stores = await AsyncStorage.multiGet(keys);
+        const motosDatas = stores.map(([key, value]) => JSON.parse(value));
+        setMotos(motosDatas);
+      } catch (error) {
+        console.log('Erro ao carregar motos:', error);
+      }
+    };
+    loadMotos();
+
+    const unsubscribe = navigation.addListener('focus', loadMotos);
+    return unsubscribe;
+  }, [navigation]);
 
   useEffect(() => {
     Animated.timing(containerAnim, {
@@ -99,9 +112,9 @@ export default function OpcoesScreen() {
         },
       ]}
     >
-    <TouchableOpacity style={styles.backArrow} onPress={() => navigation.goBack()}>
+      <TouchableOpacity style={styles.backArrow} onPress={() => navigation.goBack()}>
         <AntDesign name="caretleft" size={28} color={colors.primary} />
-    </TouchableOpacity>
+      </TouchableOpacity>
       <Text style={styles.title}>Escolha sua categoria</Text>
 
       {buttons.map((btn, index) => (
@@ -121,7 +134,10 @@ export default function OpcoesScreen() {
           <Pressable
             onPressIn={() => onPressIn(index)}
             onPressOut={() => onPressOut(index)}
-            onPress={() => navigation.navigate(btn.route)}
+            onPress={() => {
+                const motosFiltradas = moto.filter(m => m.modeloId === btn.id);
+                navigation.navigate("Motos", { motos: motosFiltradas });
+            }}
             style={styles.button}
           >
             <Image source={btn.image} style={styles.image} resizeMode="contain" />

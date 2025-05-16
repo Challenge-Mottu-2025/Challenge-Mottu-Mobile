@@ -7,13 +7,12 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import colors from '../constants/colors';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 
-
 export default function RegisterScreen({ navigation }) {
   const [modelo, setModelo] = useState(null);
   const [patio, setPatio] = useState(null);
   const [placa, setPlaca] = useState('');
   const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState(''); // 'error' | 'success'
+  const [messageType, setMessageType] = useState('');
 
   const [modeloOpen, setModeloOpen] = useState(false);
   const [patioOpen, setPatioOpen] = useState(false);
@@ -39,34 +38,49 @@ export default function RegisterScreen({ navigation }) {
 
   const placaRegex = /^[A-Z]{3}-?[0-9][A-Z0-9][0-9]{2}$/;
 
-const handleRegister = async () => {
-  const placaKey = placa.toUpperCase().replace(/\s/g, '');
+  const modeloIdMap = {
+    "Mottu Sport": 1,
+    "Mottu E": 2,
+    "Mottu Pop": 3
+  };
 
-  if (!modelo || !placaKey || !patio) {
-    setMessageType('error');
-    setMessage('Por favor, preencha todos os campos.');
-    return;
-  }
+  const handleRegister = async () => {
+    const placaKey = placa.toUpperCase().replace(/\s/g, '');
 
-  if (!placaRegex.test(placaKey)) {
-    setMessageType('error');
-    setMessage('Placa inválida. Use o formato antigo (ABC-1234) ou Mercosul (ABC1D23).');
-    return;
-  }
+    if (!modelo || !placaKey || !patio) {
+      setMessageType('error');
+      setMessage('Por favor, preencha todos os campos.');
+      return;
+    }
 
-  const existing = await AsyncStorage.getItem(placaKey);
+    if (!placaRegex.test(placaKey)) {
+      setMessageType('error');
+      setMessage('Placa inválida. Use o formato antigo (ABC-1234) ou Mercosul (ABC1D23).');
+      return;
+    }
 
-  if (existing) {
-    setMessageType('error');
-    setMessage('Esta moto já está cadastrada!');
-  } else {
-    const motoData = { modelo, placa: placaKey, patio };
-    await AsyncStorage.setItem(placaKey, JSON.stringify(motoData));
-    setMessageType('success');
-    setMessage('Moto cadastrada com sucesso!');
-    setTimeout(() => navigation.navigate('Home'), 1500);
-  }
-};
+    const existing = await AsyncStorage.getItem(placaKey);
+
+    if (existing) {
+      setMessageType('error');
+      setMessage('Esta moto já está cadastrada!');
+    } else {
+      const motoData = {
+        modelo,
+        modeloId: modeloIdMap[modelo],
+        placa: placaKey,
+        patio
+      };
+
+      await AsyncStorage.setItem(placaKey, JSON.stringify(motoData));
+
+      setMessageType('success');
+      setMessage('Moto cadastrada com sucesso!');
+      console.log(motoData);
+
+      navigation.navigate('Opcoes', { moto: motoData });
+    }
+  };
 
   useEffect(() => {
     if (modeloOpen) setPatioOpen(false);
@@ -87,7 +101,6 @@ const handleRegister = async () => {
         </TouchableOpacity>
 
         <View style={styles.container}>
-
           <Text style={styles.title}>Cadastro de Moto</Text>
 
           <Input
@@ -143,7 +156,6 @@ const handleRegister = async () => {
           ) : null}
 
           <Button title="Cadastrar Moto" onPress={handleRegister} style={styles.registerButton} />
-          
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -164,10 +176,6 @@ const styles = StyleSheet.create({
     top: 10,
     left: 10,
     padding: 10,
-  },
-  backArrowText: {
-    fontSize: 28,
-    color: colors.primary,
   },
   title: {
     fontSize: 30,
