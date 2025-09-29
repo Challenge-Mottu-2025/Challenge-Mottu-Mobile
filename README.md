@@ -173,6 +173,4 @@ João Broggine - https://www.linkedin.com/in/joaobroggine/ | joaovitorbrogginelo
 
 João Vitor Cândido - https://www.linkedin.com/in/jvictor0507/
 
-Thomas Rodrigues - https://www.linkedin.com/in/thomas-rodrigues-8b099a356/
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

@@ -4,13 +4,15 @@ import { StatusBar } from 'react-native';
 
 // Telas do app
 import HomeScreen from './screens/HomeScreen';
-import RegisterScreen from './screens/RegisterScreen';
-import LoginScreen from './screens/LoginScreen';
+import RegisterBikeScreen from './screens/RegisterScreen';
+import LoginBikeScreen from './screens/LoginScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import DetailsScreen from './screens/DetailsScreen';
 import AdminScreen from './screens/AdminScreen';
 import OpcoesScreen from './screens/OpcoesScreen';
 import MotoScreen from './screens/MotoScreen';
+import UserLoginScreen from './screens/UserLoginScreen';
+import UserRegisterScreen from './screens/UserRegisterScreen';
 
 // Tema
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
@@ -40,7 +42,7 @@ function NavigationRoot() {
         backgroundColor={theme.colors.headerBackground}
       />
       <Stack.Navigator
-        initialRouteName="Home"
+        initialRouteName="LoginUser"
         screenOptions={{
           headerStyle: { backgroundColor: theme.colors.headerBackground },
           headerTintColor: theme.colors.headerText,
@@ -53,13 +55,13 @@ function NavigationRoot() {
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="Register"
-          component={RegisterScreen}
+          name="RegisterBike"
+          component={RegisterBikeScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="Login"
-          component={LoginScreen}
+          name="LoginBike"
+          component={LoginBikeScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen
@@ -88,6 +90,16 @@ function NavigationRoot() {
           options={{
             title: 'Área Admin'
           }}
+        />
+        <Stack.Screen
+          name="LoginUser"
+          component={UserLoginScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="RegisterUser"
+          component={UserRegisterScreen}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
       <ThemeSwitcherFab />
