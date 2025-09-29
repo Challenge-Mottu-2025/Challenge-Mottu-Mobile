@@ -81,10 +81,6 @@ export default function HomeScreen({ navigation }) {
       copyText: {
         color: theme.colors.textSecondary,
       },
-      cardLike: {
-        backgroundColor: theme.colors.card,
-        borderColor: theme.colors.border
-      }
     };
   }, [theme]);
 
@@ -133,8 +129,6 @@ export default function HomeScreen({ navigation }) {
           <View
             style={[
               styles.infoBox,
-              themedStyles.cardLike,
-              { borderWidth: 1 }
             ]}
           >
             <Text style={[styles.infoText, themedStyles.copyText]}>
