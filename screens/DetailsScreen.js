@@ -1,14 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import colors from '../constants/colors'; // Certifique-se que o arquivo colors.js está ok
+import colors from '../constants/colors';
 
 export default function DetailsScreen() {
   const navigation = useNavigation();
 
   return (
     <View style={styles.container}>
-      {/* Botão Voltar personalizado */}
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
         <Text style={styles.backText}>← Voltar</Text>
       </TouchableOpacity>

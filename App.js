@@ -1,5 +1,6 @@
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { StatusBar } from 'react-native';
 
 // Telas do app
 import HomeScreen from './screens/HomeScreen';
@@ -11,14 +12,41 @@ import AdminScreen from './screens/AdminScreen';
 import OpcoesScreen from './screens/OpcoesScreen';
 import MotoScreen from './screens/MotoScreen';
 
+// Tema
+import { ThemeProvider, useTheme } from './theme/ThemeContext';
+import { ThemeSwitcherFab } from './components/ThemeToggleButton';
+
 const Stack = createNativeStackNavigator();
 
+function NavigationRoot() {
+  const { theme, isDark } = useTheme();
 
-export default function App() {
+  const navTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
+      background: theme.colors.background,
+      card: theme.colors.headerBackground,
+      text: theme.colors.text,
+      border: theme.colors.border,
+      primary: theme.colors.primary
+    }
+  };
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
+    <NavigationContainer theme={navTheme}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.colors.headerBackground}
+      />
+      <Stack.Navigator
+        initialRouteName="Home"
+        screenOptions={{
+          headerStyle: { backgroundColor: theme.colors.headerBackground },
+          headerTintColor: theme.colors.headerText,
+          headerTitleStyle: { fontWeight: '600' }
+        }}
+      >
         <Stack.Screen
           name="Home"
           component={HomeScreen}
@@ -35,12 +63,12 @@ export default function App() {
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name='Opcoes'
+          name="Opcoes"
           component={OpcoesScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name='Motos'
+          name="Motos"
           component={MotoScreen}
           options={{ headerShown: false }}
         />
@@ -58,12 +86,19 @@ export default function App() {
           name="Admin"
           component={AdminScreen}
           options={{
-            title: 'Área Admin',
-            headerStyle: { backgroundColor: '#000' },
-            headerTintColor: '#fff',
+            title: 'Área Admin'
           }}
         />
       </Stack.Navigator>
+      <ThemeSwitcherFab />
     </NavigationContainer>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <NavigationRoot />
+    </ThemeProvider>
   );
 }
