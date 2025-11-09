@@ -1,90 +1,203 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { api } from '../services/api';
-import { saveToken, getToken, clearToken } from '../services/authStorage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const USERS_KEYS = ['@users', 'users']; // tenta ambas as chaves por compatibilidade
+const LOGGED_USER_KEY = '@loggedUser';
 
 const AuthContext = createContext({
   user: null,
-  token: null,
-  loading: true,
+  loading: false,
   login: async () => false,
-  register: async () => false,
-  logout: async () => {}
+  logout: async () => {},
+  register: async () => ({ success: false, message: '' })
 });
 
-export function AuthProvider({ children }) {
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       try {
-        const stored = await getToken();
-        if (stored) {
-          setToken(stored);
-          api.defaults.headers.Authorization = `Bearer ${stored}`;
-          try {
-            const payload = JSON.parse(atob(stored.split('.')[1]));
-            setUser({ cpf: payload.sub, nome: payload.nome });
-          } catch {
-          }
-        }
+        const raw = await AsyncStorage.getItem(LOGGED_USER_KEY);
+        if (raw) setUser(JSON.parse(raw));
+      } catch (e) {
+        console.warn('Erro ao carregar usuário logado:', e);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  const login = async (cpf, senha) => {
+  const _readUsersMap = async () => {
     try {
-      const res = await api.post('/auth/login', { cpf, senha });
-      const { token: tk, cpf: cpfRes, nome } = res.data;
-      setToken(tk);
-      setUser({ cpf: cpfRes, nome });
-      api.defaults.headers.Authorization = `Bearer ${tk}`;
-      await saveToken(tk);
+      for (const key of USERS_KEYS) {
+        const raw = await AsyncStorage.getItem(key);
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object') return { map: parsed, key, mapFound: true };
+          } catch {}
+        }
+      }
+      return { map: {}, key: USERS_KEYS[0], mapFound: false }; // default key to save new users
+    } catch (e) {
+      console.warn('Erro ao ler usuários:', e);
+      return { map: {}, key: USERS_KEYS[0], mapFound: false };
+    }
+  };
+
+  const _saveUsersMap = async (map, key = USERS_KEYS[0]) => {
+    try {
+      await AsyncStorage.setItem(key, JSON.stringify(map));
       return true;
     } catch (e) {
+      console.warn('Erro ao salvar usuários:', e);
       return false;
     }
   };
 
-  const register = async ({ cpf, nome, senha, dataNascimento, nrCep }) => {
+  /**
+   * login(cpfDigitsOrFormatted, senha) -> boolean
+   * aceita cpf com ou sem formatação; compara senha em plaintext
+   */
+  const login = async (cpf, senha) => {
     try {
-      const res = await api.post('/auth/register', {
-        cpf,
-        nome,
-        senha,
-        dataNascimento: dataNascimento || null,
-        nrCep: nrCep || null
-      });
-      const { token: tk, cpf: cpfRes, nome: nomeRes } = res.data;
-      setToken(tk);
-      setUser({ cpf: cpfRes, nome: nomeRes });
-      api.defaults.headers.Authorization = `Bearer ${tk}`;
-      await saveToken(tk);
-      return true;
+      const cpfDigits = (cpf || '').toString().replace(/\D/g, '');
+      if (!cpfDigits) return false;
+
+      // 1) tenta mapa de usuários (ex: '@users' ou 'users')
+      const { map } = await _readUsersMap();
+      const userRecordFromMap = map[cpfDigits];
+      if (userRecordFromMap) {
+        if (userRecordFromMap.senha === senha) {
+          setUser(userRecordFromMap);
+          try {
+            await AsyncStorage.setItem(LOGGED_USER_KEY, JSON.stringify(userRecordFromMap));
+          } catch (e) {
+            console.warn('Erro ao salvar sessão local:', e);
+          }
+          return true;
+        }
+        return false;
+      }
+
+      // 2) fallback: tenta chave individual com o CPF (ex: AsyncStorage.getItem('12345678901'))
+      try {
+        const raw = await AsyncStorage.getItem(cpfDigits);
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed.senha === senha) {
+              setUser(parsed);
+              try {
+                await AsyncStorage.setItem(LOGGED_USER_KEY, JSON.stringify(parsed));
+              } catch (e) {
+                console.warn('Erro ao salvar sessão local:', e);
+              }
+              return true;
+            }
+            return false;
+          } catch (e) {
+            // se não for JSON, não é um registro compatível
+            return false;
+          }
+        }
+      } catch (e) {
+        console.warn('Erro ao tentar ler usuário por chave CPF:', e);
+      }
+
+      // não encontrou usuário
+      return false;
     } catch (e) {
+      console.warn('Erro no login:', e);
       return false;
     }
   };
 
   const logout = async () => {
     setUser(null);
-    setToken(null);
-    delete api.defaults.headers.Authorization;
-    await clearToken();
+    try {
+      await AsyncStorage.removeItem(LOGGED_USER_KEY);
+    } catch (e) {
+      console.warn('Erro ao limpar sessão:', e);
+    }
+  };
+
+  /**
+   * register({ cpf, nome, senha }) -> { success, message }
+   * cpf pode vir formatado; será salvo com apenas dígitos como chave
+   * Para compatibilidade, salva tanto como item individual (key = cpfDigits)
+   * quanto no mapa '@users' (merge).
+   */
+  const register = async ({ cpf, nome, senha }) => {
+    try {
+      const cpfDigits = (cpf || '').toString().replace(/\D/g, '');
+      if (!cpfDigits || cpfDigits.length !== 11) {
+        return { success: false, message: 'CPF inválido' };
+      }
+      if (!nome || !senha) {
+        return { success: false, message: 'Nome e senha são obrigatórios' };
+      }
+
+      // 1) verifica se já existe como chave individual
+      try {
+        const rawDirect = await AsyncStorage.getItem(cpfDigits);
+        if (rawDirect) {
+          return { success: false, message: 'CPF já cadastrado' };
+        }
+      } catch (e) {
+        console.warn('Erro ao checar chave direta de usuário:', e);
+      }
+
+      // 2) verifica se existe no mapa
+      const { map, key } = await _readUsersMap();
+      if (map[cpfDigits]) {
+        return { success: false, message: 'CPF já cadastrado' };
+      }
+
+      const newUser = {
+        cpf: cpfDigits,
+        nome: nome.trim(),
+        senha
+      };
+
+      // Salva como item individual (compatibilidade com código que espera key = cpf)
+      try {
+        await AsyncStorage.setItem(cpfDigits, JSON.stringify(newUser));
+      } catch (e) {
+        console.warn('Erro ao salvar usuário por chave direta:', e);
+      }
+
+      // Atualiza o mapa também (merge)
+      try {
+        const updatedMap = { ...(map || {}) };
+        updatedMap[cpfDigits] = newUser;
+        await _saveUsersMap(updatedMap, key);
+      } catch (e) {
+        console.warn('Erro ao atualizar mapa de usuários:', e);
+      }
+
+      return { success: true, message: 'Usuário registrado' };
+    } catch (e) {
+      console.warn('Erro no registro:', e);
+      return { success: false, message: 'Erro ao registrar usuário' };
+    }
   };
 
   return (
-    <AuthContext.Provider
-      value={{ user, token, loading, login, register, logout }}
-    >
+    <AuthContext.Provider value={{ user, loading, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return ctx;
+};
+
+export default AuthContext;

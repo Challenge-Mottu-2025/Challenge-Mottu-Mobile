@@ -1,203 +1,189 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Pressable,
-  TextInput,
-  ActivityIndicator,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  ScrollView,
+  TouchableOpacity
 } from 'react-native';
-import { useAuth } from '../context/authContext';
 import { useTheme } from '../theme/ThemeContext';
+import { FontAwesome } from '@expo/vector-icons';
 
-export default function UserRegisterScreen({ navigation }) {
-  const { register } = useAuth();
+import Input from '../components/Input';
+import Button from '../components/Button';
+
+import { formatCPF, registerUser } from '../utils/auth';
+
+export default function RegisterScreen({ navigation }) {
   const { theme } = useTheme();
 
-  const [cpf, setCpf] = useState('');
   const [nome, setNome] = useState('');
-  const [nrCep, setNrCep] = useState('');
+  const [cpf, setCpf] = useState('');
   const [senha, setSenha] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [msg, setMsg] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [confirmSenha, setConfirmSenha] = useState('');
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
 
-  const onSubmit = async () => {
-    setMsg('');
-    if (senha !== confirm) {
-      setMsg('Senhas não conferem.');
+  const themed = useMemo(() => {
+    return {
+      screenBg: {
+        backgroundColor: theme.colors.background
+      },
+      title: {
+        color: theme.colors.primary
+      },
+      label: {
+        color: theme.colors.text,
+        marginTop: 12,
+        marginBottom: 6
+      },
+      messageBox: (type) => ({
+        color: type === 'error' ? '#ff4d4f' : '#2ecc71',
+        marginTop: 12,
+        textAlign: 'center'
+      }),
+      input: {
+        backgroundColor: theme.colors.card,
+        color: theme.colors.text
+      }
+    };
+  }, [theme]);
+
+  const handleRegister = async () => {
+    setMessage('');
+    if (!nome.trim() || !cpf || !senha) {
+      setMessageType('error');
+      setMessage('Preencha todos os campos.');
       return;
     }
-    setSubmitting(true);
-    const ok = await register({
-      cpf: cpf.replace(/\D/g, ''),
-      nome,
-      senha,
-      nrCep: nrCep || null
-    });
-    setSubmitting(false);
-    if (!ok) setMsg('Erro ao registrar (CPF já existe?)');
+    if (senha.length < 4) {
+      setMessageType('error');
+      setMessage('Senha deve ter ao menos 4 caracteres.');
+      return;
+    }
+    if (senha !== confirmSenha) {
+      setMessageType('error');
+      setMessage('As senhas não coincidem.');
+      return;
+    }
+
+    const res = await registerUser({ cpf, nome, senha });
+    if (!res.success) {
+      setMessageType('error');
+      setMessage(res.message);
+      return;
+    }
+
+    setMessageType('success');
+    setMessage('Usuário cadastrado com sucesso. Faça login.');
+    setTimeout(() => navigation.navigate('LoginUser'), 1000);
+  };
+
+  const onChangeCPF = (text) => {
+    setCpf(formatCPF(text));
   };
 
   return (
     <KeyboardAvoidingView
-      style={[styles.root, { backgroundColor: theme.colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={[styles.wrapper, themed.screenBg]}
     >
-      <View style={styles.container}>
-        <Text style={[styles.title, { color: theme.colors.text }]}>
-          Criar Conta
-        </Text>
-
-        <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: theme.colors.card,
-              color: theme.colors.text,
-              borderColor: theme.colors.border
-            }
-          ]}
-          placeholder="CPF"
-          keyboardType="numeric"
-          placeholderTextColor={theme.colors.textSecondary}
-          value={cpf}
-          onChangeText={setCpf}
-        />
-
-        <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: theme.colors.card,
-              color: theme.colors.text,
-              borderColor: theme.colors.border
-            }
-          ]}
-          placeholder="Nome"
-          placeholderTextColor={theme.colors.textSecondary}
-          value={nome}
-          onChangeText={setNome}
-        />
-
-        <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: theme.colors.card,
-              color: theme.colors.text,
-              borderColor: theme.colors.border
-            }
-          ]}
-          placeholder="CEP (opcional)"
-          keyboardType="numeric"
-          placeholderTextColor={theme.colors.textSecondary}
-          value={nrCep}
-          onChangeText={setNrCep}
-        />
-
-        <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: theme.colors.card,
-              color: theme.colors.text,
-              borderColor: theme.colors.border
-            }
-          ]}
-          placeholder="Senha"
-          secureTextEntry
-          placeholderTextColor={theme.colors.textSecondary}
-          value={senha}
-          onChangeText={setSenha}
-        />
-        <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: theme.colors.card,
-              color: theme.colors.text,
-              borderColor: theme.colors.border
-            }
-          ]}
-          placeholder="Confirmar Senha"
-          secureTextEntry
-          placeholderTextColor={theme.colors.textSecondary}
-          value={confirm}
-          onChangeText={setConfirm}
-        />
-
-        {msg ? <Text style={styles.error}>{msg}</Text> : null}
-
-        <Pressable
-          onPress={onSubmit}
-          style={({ pressed }) => [
-            styles.button,
-            { backgroundColor: theme.colors.primary },
-            pressed && { opacity: 0.85 }
-          ]}
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <TouchableOpacity
+          style={styles.backArrow}
+          onPress={() => navigation.goBack()}
+          hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
         >
-          {submitting ? (
-            <ActivityIndicator color={theme.colors.primaryContrast} />
-          ) : (
-            <Text
-              style={{
-                color: theme.colors.primaryContrast,
-                fontWeight: '700'
-              }}
-            >
-              Registrar
-            </Text>
-          )}
-        </Pressable>
+          <FontAwesome name="caret-left" size={28} color={theme.colors.primary} />
+        </TouchableOpacity>
 
-        <Pressable onPress={() => navigation.goBack()}>
-          <Text
-            style={{
-              color: theme.colors.primary,
-              marginTop: 20,
-              fontWeight: '600'
-            }}
-          >
-            Já tenho conta
-          </Text>
-        </Pressable>
-      </View>
+        <View style={styles.container}>
+          <Text style={[styles.title, themed.title]}>Cadastro de Usuário</Text>
+
+          <Text style={themed.label}>Nome</Text>
+          <Input
+            value={nome}
+            onChangeText={setNome}
+            placeholder="Seu nome completo"
+            style={[styles.input, themed.input]}
+            placeholderTextColor={theme.colors.textSecondary}
+          />
+
+          <Text style={themed.label}>CPF</Text>
+          <Input
+            value={cpf}
+            onChangeText={onChangeCPF}
+            placeholder="000.000.000-00"
+            keyboardType="numeric"
+            maxLength={14}
+            style={[styles.input, themed.input]}
+            placeholderTextColor={theme.colors.textSecondary}
+          />
+
+          <Text style={themed.label}>Senha</Text>
+          <Input
+            value={senha}
+            onChangeText={setSenha}
+            placeholder="Senha"
+            secureTextEntry
+            style={[styles.input, themed.input]}
+            placeholderTextColor={theme.colors.textSecondary}
+          />
+
+          <Text style={themed.label}>Confirmar Senha</Text>
+          <Input
+            value={confirmSenha}
+            onChangeText={setConfirmSenha}
+            placeholder="Repita a senha"
+            secureTextEntry
+            style={[styles.input, themed.input]}
+            placeholderTextColor={theme.colors.textSecondary}
+          />
+
+          {message ? (
+            <Text style={[styles.message, themed.messageBox(messageType)]}>
+              {message}
+            </Text>
+          ) : null}
+
+          <Button title="Cadastrar" onPress={handleRegister} style={styles.button} />
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
-  container: {
-    flex: 1,
-    paddingHorizontal: 28,
+  wrapper: { flex: 1 },
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: 'center'
   },
+  container: {
+    padding: 24
+  },
+  backArrow: {
+    paddingTop: 50,
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    padding: 10
+  },
   title: {
-    fontSize: 30,
-    fontWeight: '800',
-    marginBottom: 30,
-    textAlign: 'center'
+    fontSize: 28,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 20
   },
   input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 16,
-    marginBottom: 14
+    marginBottom: 6
+  },
+  message: {
+    marginTop: 8
   },
   button: {
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 6
-  },
-  error: {
-    color: 'tomato',
-    marginBottom: 8,
-    textAlign: 'center'
+    marginTop: 18
   }
 });
