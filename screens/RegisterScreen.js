@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DropDownPicker from 'react-native-dropdown-picker';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import { FontAwesome } from '@expo/vector-icons';
 
 import Input from '../components/Input';
 import Button from '../components/Button';
@@ -166,7 +166,7 @@ export default function RegisterScreen({ navigation }) {
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
         >
-          <AntDesign name="caretleft" size={28} color={theme.colors.primary} />
+          <FontAwesome name="caret-left" size={28} color={theme.colors.primary} />
         </TouchableOpacity>
 
         <View style={styles.container}>

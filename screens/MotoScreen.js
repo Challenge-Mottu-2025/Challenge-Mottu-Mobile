@@ -7,7 +7,7 @@ import {
   TouchableOpacity
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import { FontAwesome } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 
 export default function MotoScreen() {
@@ -49,7 +49,7 @@ export default function MotoScreen() {
         accessibilityRole="button"
         accessibilityLabel="Voltar"
       >
-        <AntDesign name="caretleft" size={28} color={theme.colors.primary} />
+        <FontAwesome name="caret-left" size={28} color={theme.colors.primary} />
       </TouchableOpacity>
 
       <Text style={[styles.title, themed.title]}>
