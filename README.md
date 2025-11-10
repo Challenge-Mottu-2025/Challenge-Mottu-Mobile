@@ -173,4 +173,6 @@ João Broggine - https://www.linkedin.com/in/joaobroggine/ | joaovitorbrogginelo
 
 João Vitor Cândido - https://www.linkedin.com/in/jvictor0507/
 
+Eduardo Augusto Pelegrino Einsfeldt - https://www.linkedin.com/in/eduardo-augusto-pelegrino-einsfeldt-289722247/
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

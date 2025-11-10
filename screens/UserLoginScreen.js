@@ -9,11 +9,10 @@ import {
   KeyboardAvoidingView,
   Platform
 } from 'react-native';
-import { useAuth } from '../context/authContext';
 import { useTheme } from '../theme/ThemeContext';
+import { loginUser } from '../utils/auth'; // ✅ usa o login local
 
 export default function UserLoginScreen({ navigation }) {
-  const { login } = useAuth();
   const { theme } = useTheme();
 
   const [cpf, setCpf] = useState('');
@@ -24,9 +23,16 @@ export default function UserLoginScreen({ navigation }) {
   const onSubmit = async () => {
     setErr('');
     setSubmitting(true);
-    const ok = await login(cpf.replace(/\D/g, ''), senha);
+    const res = await loginUser({ cpf, senha }); // ✅ login local
     setSubmitting(false);
-    if (!ok) setErr('CPF ou senha inválidos.');
+
+    if (!res.success) {
+      setErr(res.message || 'CPF ou senha inválidos.');
+    } else {
+      console.log('✅ Login bem-sucedido:', res.user);
+      // Redireciona após login
+      navigation.replace('Home'); // troque 'Home' pela sua tela principal
+    }
   };
 
   return (
@@ -35,9 +41,7 @@ export default function UserLoginScreen({ navigation }) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.container}>
-        <Text style={[styles.title, { color: theme.colors.text }]}>
-          Entrar
-        </Text>
+        <Text style={[styles.title, { color: theme.colors.text }]}>Entrar</Text>
 
         <TextInput
           style={[
@@ -54,6 +58,7 @@ export default function UserLoginScreen({ navigation }) {
           value={cpf}
           onChangeText={setCpf}
         />
+
         <TextInput
           style={[
             styles.input,
@@ -73,7 +78,8 @@ export default function UserLoginScreen({ navigation }) {
         {err ? <Text style={styles.error}>{err}</Text> : null}
 
         <Pressable
-            onPress={onSubmit}
+          onPress={onSubmit}
+          disabled={submitting}
           style={({ pressed }) => [
             styles.button,
             { backgroundColor: theme.colors.primary },

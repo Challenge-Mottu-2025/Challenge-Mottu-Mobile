@@ -4,7 +4,7 @@ import { StatusBar } from 'react-native';
 
 // Telas do app
 import HomeScreen from './screens/HomeScreen';
-import RegisterBikeScreen from './screens/RegisterScreen';
+import RegisterScreen from './screens/RegisterScreen';
 import LoginBikeScreen from './screens/LoginScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import DetailsScreen from './screens/DetailsScreen';
@@ -55,8 +55,8 @@ function NavigationRoot() {
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="RegisterBike"
-          component={RegisterBikeScreen}
+          name="Register"
+          component={RegisterScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen
